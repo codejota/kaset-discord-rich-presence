@@ -315,6 +315,10 @@ struct KasetApp: App {
                 .onChange(of: self.playerService.currentTrack) { _, _ in
                     self.refreshDiscordPresence()
                 }
+                .onChange(of: self.playerService.progress) { previous, current in
+    guard self.playerService.isPlaying, abs(current - previous) >= 2 else { return }
+    self.refreshDiscordPresence()
+}
                 .onChange(of: self.settings.discordPresenceEnabled) { _, _ in
                     self.refreshDiscordPresence()
                 }
@@ -702,7 +706,8 @@ struct KasetApp: App {
         self.discordPresence.update(
             song: self.playerService.currentTrack,
             isPlaying: self.playerService.isPlaying,
-            currentTimeMs: self.playerService.currentTimeMs,
+            progress: self.playerService.progress,
+            currentTimeMs: Int(max(0, self.playerService.progress) * 1000),
             duration: self.playerService.bestKnownDuration(for: self.playerService.currentTrack),
             enabled: self.settings.discordPresenceEnabled
         )
