@@ -100,7 +100,7 @@ enum KeychainCookieStorage {
     private static let writeCoordinator = CookieArchiveWriteCoordinator()
 
     /// Keychain service identifier for cookie storage.
-    fileprivate static let service = "com.kaset.auth-cookies"
+    fileprivate static let service = "com.codejota.kaset-discord.auth-cookies"
 
     /// Keychain account identifier.
     private static let account = "youtube-music-cookies"

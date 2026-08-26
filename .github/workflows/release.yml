@@ -437,9 +437,9 @@ jobs:
       - name: Checkout Homebrew tap repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
-          repository: sozercan/homebrew-repo
-          token: ${{ secrets.HOMEBREW_REPO_TOKEN }}
-          path: homebrew-repo
+          repository: codejota/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
           fetch-depth: 0
 
       - name: Update Homebrew Cask
@@ -447,44 +447,41 @@ jobs:
           TAG="${{ steps.artifact.outputs.tag }}"
           VERSION="${TAG#v}"
 
-          cd homebrew-repo
+          cd homebrew-tap
 
           # Update the cask file
           mkdir -p Casks
-          cat > Casks/kaset.rb << EOF
-          cask "kaset" do
+          cat > Casks/kaset-discord-rich-presence.rb << EOF
+          cask "kaset-discord-rich-presence" do
             version "$VERSION"
             sha256 "${{ steps.sha256.outputs.sha256 }}"
 
-            url "https://github.com/sozercan/kaset/releases/download/v#{version}/kaset-v#{version}.dmg"
-            name "Kaset"
-            desc "Native YouTube Music client"
-            homepage "https://github.com/sozercan/kaset"
+            url "https://github.com/codejota/kaset-discord-rich-presence/releases/download/v#{version}/kaset-v#{version}.dmg"
+            name "Kaset Discord Rich Presence"
+            desc "Kaset with Discord Rich Presence"
+            homepage "https://github.com/codejota/kaset-discord-rich-presence"
 
-            auto_updates true
-            # Homebrew casks can gate on macOS release symbols, but not this
-            # app's exact 15.4 patch minimum; LSMinimumSystemVersion and
-            # Sparkle's appcast enforce 15.4 at launch/update time.
+            auto_updates false
             depends_on macos: :sequoia
 
-            app "Kaset.app"
+            app "Kaset.app", target: "Kaset Discord.app"
 
             postflight do
-              system_command "/usr/bin/xattr", args: ["-cr", "#{appdir}/Kaset.app"], sudo: false
+              system_command "/usr/bin/xattr", args: ["-cr", "#{appdir}/Kaset Discord.app"], sudo: false
             end
 
             zap trash: [
-              "~/Library/Application Support/Kaset",
-              "~/Library/Caches/com.sertacozercan.Kaset",
-              "~/Library/Preferences/com.sertacozercan.Kaset.plist",
-              "~/Library/Saved Application State/com.sertacozercan.Kaset.savedState",
-              "~/Library/WebKit/com.sertacozercan.Kaset",
+              "~/Library/Containers/com.codejota.KasetDiscord",
+              "~/Library/Caches/com.codejota.KasetDiscord",
+              "~/Library/Preferences/com.codejota.KasetDiscord.plist",
+              "~/Library/Saved Application State/com.codejota.KasetDiscord.savedState",
+              "~/Library/WebKit/com.codejota.KasetDiscord",
             ]
           end
           EOF
 
-          git add Casks/kaset.rb
-          git diff --cached --quiet || git commit -m "Update kaset to ${TAG}"
+          git add Casks/kaset-discord-rich-presence.rb
+          git diff --cached --quiet || git commit -m "Update kaset-discord-rich-presence to ${TAG}"
           git push origin main
 
       - name: Update Appcast

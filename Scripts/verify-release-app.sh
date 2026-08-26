@@ -70,7 +70,7 @@ with entitlements_path.open("rb") as handle:
 
 errors: list[str] = []
 bundle_id = info.get("CFBundleIdentifier")
-expected_bundle_id = "com.sertacozercan.Kaset"
+expected_bundle_id = "com.codejota.KasetDiscord"
 if bundle_id != expected_bundle_id:
     errors.append(f"CFBundleIdentifier must be {expected_bundle_id}, found {bundle_id!r}")
 

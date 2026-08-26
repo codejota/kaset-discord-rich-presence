@@ -159,7 +159,7 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Link(destination: URL(string: "https://github.com/sozercan/kaset")!) {
+                Link(destination: URL(string: "https://github.com/codejota/kaset-discord-rich-presence")!) {
                     HStack {
                         Text(String(localized: "GitHub"))
                         Spacer()

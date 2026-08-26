@@ -10,8 +10,8 @@ final class KeychainCredentialStore {
     private let servicePrefix: String
 
     /// Creates a credential store with the given service prefix.
-    /// - Parameter servicePrefix: Prefix for Keychain entries (default: "com.sertacozercan.Kaset").
-    init(servicePrefix: String = "com.sertacozercan.Kaset") {
+    /// - Parameter servicePrefix: Prefix for Keychain entries (default: "com.codejota.KasetDiscord").
+    init(servicePrefix: String = "com.codejota.KasetDiscord") {
         self.servicePrefix = servicePrefix
     }
 

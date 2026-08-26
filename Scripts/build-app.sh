@@ -14,7 +14,7 @@ CONF=${1:-release}
 SIGNING_MODE=${KASET_SIGNING:-dev}
 SKIP_MAIN_ASSETS=${KASET_SKIP_MAIN_ASSETS:-0}
 APP_NAME="Kaset"
-BUNDLE_ID="com.sertacozercan.Kaset"
+BUNDLE_ID="com.codejota.KasetDiscord"
 DEVELOPMENT_LOCALIZATION="en"
 BUILD_DIR="$ROOT/.build/app"
 APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
@@ -451,10 +451,10 @@ ${APP_LOCALIZATIONS_PLIST}
     <array>
         <dict>
             <key>CFBundleURLName</key>
-            <string>com.sertacozercan.kaset</string>
+            <string>com.codejota.kaset-discord</string>
             <key>CFBundleURLSchemes</key>
             <array>
-                <string>kaset</string>
+                <string>kaset-discord</string>
             </array>
             <key>CFBundleTypeRole</key>
             <string>Viewer</string>
@@ -463,15 +463,15 @@ ${APP_LOCALIZATIONS_PLIST}
 
     <!-- Sparkle Auto-Update Configuration -->
     <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/sozercan/kaset/main/appcast.xml</string>
+    <string>https://raw.githubusercontent.com/codejota/kaset-discord-rich-presence/main/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>qa2zoeXHqn+pluxQSGjn5HyIYA/iFtrEJz7S1BoslpI=</string>
     <key>SUEnableAutomaticChecks</key>
-    <true/>
+    <false/>
     <key>SUScheduledCheckInterval</key>
     <integer>86400</integer>
     <key>SUAllowsAutomaticUpdates</key>
-    <true/>
+    <false/>
     <key>SUEnableInstallerLauncherService</key>
     <true/>
 

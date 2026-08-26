@@ -1,24 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
     <channel>
-        <title>Kaset Updates</title>
-        <link>https://github.com/sozercan/kaset/releases</link>
-        <description>Most recent updates for Kaset, a native macOS YouTube Music client.</description>
+        <title>Kaset Discord Rich Presence Updates</title>
+        <link>https://github.com/codejota/kaset-discord-rich-presence/releases</link>
+        <description>Updates for the Kaset Discord Rich Presence fork.</description>
         <language>en</language>
-
-        <item>
-            <title>Version 0.13.1</title>
-            <sparkle:releaseNotesLink>https://github.com/sozercan/kaset/releases/tag/v0.13.1</sparkle:releaseNotesLink>
-            <pubDate>Mon, 27 Jul 2026 03:35:08 +0000</pubDate>
-            <enclosure
-                url="https://github.com/sozercan/kaset/releases/download/v0.13.1/kaset-v0.13.1.dmg"
-                sparkle:version="23"
-                sparkle:shortVersionString="0.13.1"
-                length="16647013"
-                type="application/octet-stream"
-                sparkle:edSignature="w1SN5lD2ALVLt+H6i41+0NjfAmrvqeBXFm5URrrhdgtikrE2usq37R6euqZoxuDEYxdnqap/c8zQpWIzgBm2BA=="/>
-            <sparkle:minimumSystemVersion>15.4</sparkle:minimumSystemVersion>
-        </item>
-
     </channel>
 </rss>

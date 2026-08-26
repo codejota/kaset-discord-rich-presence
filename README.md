@@ -28,6 +28,15 @@ No Discord Developer Portal setup is required. The public Discord Application ID
 
 If the activity does not appear, make sure **Discord → User Settings → Activity Privacy → Share your detected activities with others** is enabled.
 
+## Install with Homebrew
+
+```bash
+brew tap codejota/tap
+brew install --cask kaset-discord-rich-presence
+```
+
+The Homebrew cask installs this fork as **Kaset Discord.app**, so it can coexist with the upstream **Kaset.app**.
+
 ## Build from source
 
 A full Xcode installation is required.

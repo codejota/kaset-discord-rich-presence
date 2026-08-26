@@ -31,8 +31,8 @@
 	<!-- Required by Sparkle's sandboxed installer launcher/status services. -->
 	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
 	<array>
-		<string>com.sertacozercan.Kaset-spks</string>
-		<string>com.sertacozercan.Kaset-spki</string>
+		<string>com.codejota.KasetDiscord-spks</string>
+		<string>com.codejota.KasetDiscord-spki</string>
 	</array>
 </dict>
 </plist>

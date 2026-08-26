@@ -334,7 +334,7 @@ func loadCookiesFromAppBackup() -> [HTTPCookie]? {
             .appendingPathComponent("cookies.dat")
 
     let containerCookieFile = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Library/Containers/com.sertacozercan.Kaset/Data", isDirectory: true)
+        .appendingPathComponent("Library/Containers/com.codejota.KasetDiscord/Data", isDirectory: true)
         .appendingPathComponent("Library/Application Support/Kaset", isDirectory: true)
         .appendingPathComponent("cookies.dat")
 
