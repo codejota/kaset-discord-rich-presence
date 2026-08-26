@@ -1,41 +1,98 @@
-<h1 align="center">Kaset — Discord Rich Presence</h1>
+# Kaset — Discord Rich Presence
 
-<p align="center">A small fork of <a href="https://github.com/sozercan/kaset">Kaset</a> focused on Discord Rich Presence.</p>
+A fork of [Kaset](https://github.com/sozercan/kaset) focused on adding Discord Rich Presence while keeping the original application experience as intact as possible.
 
-> The original project, complete feature list, documentation, and installation information are available in the [upstream Kaset README](https://github.com/sozercan/kaset#readme).
+> For the original project, features and documentation, see the [upstream Kaset repository](https://github.com/sozercan/kaset).
 
-## Why this fork
+## Why this fork?
 
-Kaset already provides a native YouTube Music experience on macOS. This fork keeps the upstream app as close to the original as possible while adding optional Discord Rich Presence for music playback.
+Kaset already provides a great native YouTube Music experience for macOS.
 
-When enabled, Discord can show:
+This fork adds Discord Rich Presence so your current music can also appear on your Discord profile, including:
 
-- Current track
+- Track title
 - Artist
 - Album artwork
-- Playback time
-- A button to open the track on YouTube Music
+- Playback progress
+- Paused/playing state
+- Link back to YouTube Music
 
-## Using Discord Rich Presence
+No Discord configuration is required by the user.
+
+## Install with Homebrew
+
+This project is distributed through the Jotacode Homebrew tap.
+
+```bash
+brew tap codejota/tap
+brew trust codejota/tap
+brew install --cask kaset-discord-rich-presence
+```
+
+The `brew trust` command is required because this is a third-party Homebrew tap. It explicitly allows Homebrew to load Casks from this repository.
+
+After installation, the app will be available as:
+
+```text
+/Applications/Kaset Discord.app
+```
+
+### Updating
+
+```bash
+brew update
+brew upgrade --cask kaset-discord-rich-presence
+```
+
+### Uninstalling
+
+```bash
+brew uninstall --cask kaset-discord-rich-presence
+```
+
+## Original Kaset compatibility
+
+This fork is intentionally kept separate from the original Kaset installation.
+
+The original app can remain installed as:
+
+```text
+/Applications/Kaset.app
+```
+
+while this fork installs as:
+
+```text
+/Applications/Kaset Discord.app
+```
+
+The fork also uses its own bundle identifier and application data, so installing it should not overwrite the original Kaset installation.
+
+## Discord Rich Presence
 
 1. Open the Discord desktop app.
-2. Open Kaset.
+2. Open Kaset Discord.
 3. Go to **Settings → General → Discord**.
 4. Enable **Share listening status on Discord**.
 5. Start playing music.
 
-No Discord Developer Portal setup is required. The public Discord Application ID used by this fork is already included in the app. No client secret, bot token, or user token is bundled.
+If your activity does not appear, check:
 
-If the activity does not appear, make sure **Discord → User Settings → Activity Privacy → Share your detected activities with others** is enabled.
+**Discord → Settings → Activity Privacy → Share your detected activities with others**
 
-## Install with Homebrew
+The Discord Application ID is already included in the app. Users do not need to create their own Discord Developer application.
 
-```bash
-brew tap codejota/tap
-brew install --cask kaset-discord-rich-presence
-```
+No Discord client secret, bot token or user token is included.
 
-The Homebrew cask installs this fork as **Kaset Discord.app**, so it can coexist with the upstream **Kaset.app**.
+## Manual installation
+
+Prebuilt releases are also available from:
+
+[GitHub Releases](https://github.com/codejota/kaset-discord-rich-presence/releases)
+
+Download the latest `.dmg`, open it and move **Kaset Discord** to your Applications folder.
+
+Because current releases are not notarized with an Apple Developer ID, macOS may display a security warning on first launch.
 
 ## Build from source
 
@@ -46,19 +103,21 @@ chmod +x Scripts/build-app.sh Scripts/compile_and_run.sh
 KASET_SIGNING=adhoc ./Scripts/compile_and_run.sh --release
 ```
 
-The built app will be available at:
+The generated application will be available at:
 
 ```text
-.build/app/Kaset.app
+.build/app/Kaset Discord.app
 ```
 
 ## Upstream
 
-Kaset is developed by [sozercan](https://github.com/sozercan). For the original project and all features unrelated to this fork, see:
+Kaset is originally developed by [sozercan](https://github.com/sozercan).
 
-- [sozercan/kaset](https://github.com/sozercan/kaset)
-- [Original README](https://github.com/sozercan/kaset#readme)
+This repository only maintains the changes specific to this fork.
+
+- [Original Kaset repository](https://github.com/sozercan/kaset)
+- [Original Kaset README](https://github.com/sozercan/kaset#readme)
 
 ## Disclaimer
 
-Kaset is an unofficial application and is not affiliated with YouTube, Google, or Discord.
+Kaset is an unofficial application and is not affiliated with YouTube, Google or Discord.
