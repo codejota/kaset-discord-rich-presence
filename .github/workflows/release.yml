@@ -1,19 +1,12 @@
 name: Release Build
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-build
+  cancel-in-progress: false
 
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Optional tag/label used for naming the release asset"
-        required: false
-        default: ""
       require_developer_id:
         description: "Fail unless a Developer ID Application certificate and notarization secrets are configured"
         required: false
@@ -33,7 +26,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
-          fetch-depth: 0 # Full history for changelog generation
+          fetch-depth: 0  # Full history for changelog generation
 
       - name: Configure git user
         run: |
@@ -83,19 +76,39 @@ jobs:
       - name: Clear SPM binary artifacts cache
         run: rm -rf ~/Library/Caches/org.swift.swiftpm/artifacts
 
-      - name: Determine version from tag
+      - name: Determine release version
         id: version
+        shell: bash
         run: |
-          if [ -n "${{ inputs.tag }}" ]; then
-            TAG="${{ inputs.tag }}"
-          elif [ -n "${{ github.ref_name }}" ]; then
-            TAG="${{ github.ref_name }}"
+          set -euo pipefail
+          git fetch --tags --force
+
+          LATEST=$(git tag -l 'v*' --sort=-v:refname | awk '/^v[0-9]+\.[0-9]+\.[0-9]+$/ { print; exit }')
+
+          if [ -n "$LATEST" ] && [ "$(git rev-list -n 1 "$LATEST")" = "$GITHUB_SHA" ]; then
+            TAG="$LATEST"
+          elif [ -n "$LATEST" ] && [[ "$LATEST" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            PATCH="${BASH_REMATCH[3]}"
+            TAG="v${MAJOR}.${MINOR}.$((PATCH + 1))"
           else
-            TAG="0.0.0"
+            TAG="v1.0.0"
           fi
-          VERSION="${TAG#v}"  # Remove 'v' prefix if present
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "ERROR: Refusing non-semver release tag: $TAG" >&2
+            exit 1
+          fi
+
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Using version: $VERSION"
+          echo "Using release: $TAG"
+
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            git tag -a "$TAG" "$GITHUB_SHA" -m "$TAG"
+          fi
 
       - name: Configure release signing
         id: import_cert
@@ -281,18 +294,7 @@ jobs:
       - name: Determine artifact name
         id: artifact
         run: |
-          if [ -n "${{ inputs.tag }}" ]; then
-            TAG="${{ inputs.tag }}"
-          elif [ -n "${{ github.ref_name }}" ]; then
-            TAG="${{ github.ref_name }}"
-          else
-            TAG="v${{ steps.version.outputs.version }}"
-          fi
-
-          if [ -z "$TAG" ]; then
-            TAG="release"
-          fi
-
+          TAG="${{ steps.version.outputs.tag }}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "filename=kaset-$TAG.dmg" >> "$GITHUB_OUTPUT"
 
@@ -387,6 +389,15 @@ jobs:
           echo "length=$LENGTH" >> "$GITHUB_OUTPUT"
           echo "Sparkle signature generated successfully"
 
+      - name: Publish release tag
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists on origin"
+          else
+            git push origin "refs/tags/$TAG"
+          fi
+
       - name: Generate release notes
         id: release_notes
         run: |
@@ -466,9 +477,15 @@ jobs:
 
       - name: Update Homebrew Cask
         run: |
+          set -euo pipefail
           TAG="${{ steps.artifact.outputs.tag }}"
-          VERSION="${TAG#v}"
 
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "ERROR: Refusing to publish Homebrew Cask for invalid tag: $TAG" >&2
+            exit 1
+          fi
+
+          VERSION="${TAG#v}"
           cd homebrew-tap
 
           # Update the cask file
