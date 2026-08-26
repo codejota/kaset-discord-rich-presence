@@ -16,6 +16,7 @@ This fork adds Discord Rich Presence so your current music can also appear on yo
 - Playback progress
 - Paused/playing state
 - Link back to YouTube Music
+- T
 
 No Discord configuration is required by the user.
 
