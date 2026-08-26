@@ -6,7 +6,7 @@ A fork of [Kaset](https://github.com/sozercan/kaset) focused on adding Discord R
 
 ## Why this fork?
 
-Kaset already provides a great native YouTube Music experience for macOS.
+Kaset already provides a great native YouTube Music experience for macOS!
 
 This fork adds Discord Rich Presence so your current music can also appear on your Discord profile, including:
 
