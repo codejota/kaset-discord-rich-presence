@@ -318,9 +318,6 @@ struct KasetApp: App {
                 .onChange(of: self.settings.discordPresenceEnabled) { _, _ in
                     self.refreshDiscordPresence()
                 }
-                .onChange(of: self.settings.discordApplicationID) { _, _ in
-                    self.refreshDiscordPresence()
-                }
                 .onChange(of: self.youtubePlayerService.surfaceLocation) { _, location in
                     self.handleYouTubeSurfaceLocationChange(location)
                 }
@@ -707,8 +704,7 @@ struct KasetApp: App {
             isPlaying: self.playerService.isPlaying,
             currentTimeMs: self.playerService.currentTimeMs,
             duration: self.playerService.bestKnownDuration(for: self.playerService.currentTrack),
-            enabled: self.settings.discordPresenceEnabled,
-            applicationID: self.settings.discordApplicationID
+            enabled: self.settings.discordPresenceEnabled
         )
     }
 

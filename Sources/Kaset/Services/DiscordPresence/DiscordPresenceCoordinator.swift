@@ -4,11 +4,13 @@ import Foundation
 private struct PresenceTrack: Sendable, Equatable {
     let title: String
     let artist: String
+    let album: String?
+    let artworkURL: String?
     let videoID: String
     let duration: TimeInterval
     let isPlaying: Bool
     let positionMs: Int
-    let sampledAtMs: Int64
+    let sampledAt: Int64
 }
 
 private actor LocalDiscordBridge {
@@ -78,18 +80,26 @@ private actor LocalDiscordBridge {
     private func activityBody(for track: PresenceTrack) -> Data? {
         var activity: [String: Any] = [
             "details": track.title,
-            "state": track.isPlaying ? track.artist : "\(track.artist) • Paused",
+            "state": "by \(track.artist)",
             "buttons": [[
                 "label": "Listen on YouTube Music",
                 "url": "https://music.youtube.com/watch?v=\(track.videoID)",
             ]],
         ]
 
+        if let artworkURL = track.artworkURL {
+            activity["assets"] = [
+                "large_image": artworkURL,
+                "large_text": track.album ?? track.title,
+            ]
+        }
+
         if track.isPlaying {
-            let start = track.sampledAtMs - Int64(max(0, track.positionMs))
+            let elapsed = Int64(max(0, track.positionMs) / 1000)
+            let start = track.sampledAt - elapsed
             var timestamps: [String: Int64] = ["start": start]
             if track.duration.isFinite, track.duration > 0 {
-                timestamps["end"] = start + Int64(track.duration * 1000)
+                timestamps["end"] = start + Int64(track.duration)
             }
             activity["timestamps"] = timestamps
         }
@@ -352,43 +362,42 @@ private actor LocalDiscordBridge {
 
 @MainActor
 final class DiscordPresenceCoordinator {
+    private static let applicationID = "1542195962129416305"
+
     private let bridge = LocalDiscordBridge()
     private var refreshTask: Task<Void, Never>?
-    private var currentApplicationID: String?
+    private var hasPublishedPresence = false
 
     func update(
         song: Song?,
         isPlaying: Bool,
         currentTimeMs: Int,
         duration: TimeInterval,
-        enabled: Bool,
-        applicationID: String
+        enabled: Bool
     ) {
-        let normalizedID = applicationID.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard enabled,
-              !normalizedID.isEmpty,
-              normalizedID.allSatisfy(\.isNumber),
-              let song
-        else {
+        guard enabled, let song else {
             self.stop()
             return
         }
 
-        self.currentApplicationID = normalizedID
+        let artworkURL = song.thumbnailURL?.absoluteString ?? song.fallbackThumbnailURL?.absoluteString
         let track = PresenceTrack(
             title: song.title,
             artist: song.artistsDisplay.isEmpty ? "Unknown Artist" : song.artistsDisplay,
+            album: song.album?.title,
+            artworkURL: artworkURL,
             videoID: song.videoId,
             duration: duration,
             isPlaying: isPlaying,
             positionMs: max(0, currentTimeMs),
-            sampledAtMs: Int64(Date().timeIntervalSince1970 * 1000)
+            sampledAt: Int64(Date().timeIntervalSince1970)
         )
 
+        self.hasPublishedPresence = true
         self.refreshTask?.cancel()
         self.refreshTask = Task { [bridge] in
             while !Task.isCancelled {
-                let success = await bridge.push(track, applicationID: normalizedID)
+                let success = await bridge.push(track, applicationID: Self.applicationID)
                 if Task.isCancelled { return }
                 try? await Task.sleep(for: .seconds(success ? 15 : 5))
             }
@@ -398,10 +407,10 @@ final class DiscordPresenceCoordinator {
     func stop() {
         self.refreshTask?.cancel()
         self.refreshTask = nil
-        guard let applicationID = self.currentApplicationID else { return }
-        self.currentApplicationID = nil
+        guard self.hasPublishedPresence else { return }
+        self.hasPublishedPresence = false
         Task { [bridge] in
-            await bridge.clear(applicationID: applicationID)
+            await bridge.clear(applicationID: Self.applicationID)
             await bridge.disconnect()
         }
     }

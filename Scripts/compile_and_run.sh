@@ -4,27 +4,6 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
-resolve_xcode() {
-  local current=""
-  current=$(xcode-select -p 2>/dev/null || true)
-  if [[ "$current" == */Xcode*.app/Contents/Developer && -d "$current" ]]; then
-    export DEVELOPER_DIR="$current"
-    return 0
-  fi
-
-  local app
-  for app in /Applications/Xcode*.app "$HOME"/Applications/Xcode*.app; do
-    [[ -d "$app/Contents/Developer" ]] || continue
-    export DEVELOPER_DIR="$app/Contents/Developer"
-    return 0
-  done
-
-  printf 'ERROR: Full Xcode was not found. Install Xcode and open it once before building Kaset.\n' >&2
-  exit 1
-}
-
-resolve_xcode
 APP_BUNDLE="${ROOT_DIR}/.build/app/Kaset.app"
 APP_PROCESS_PATTERN="Kaset.app/Contents/MacOS/Kaset"
 DEBUG_PROCESS_PATTERN="${ROOT_DIR}/.build/debug/Kaset"
@@ -156,7 +135,7 @@ fi
 
 # 4) Test (optional).
 if [[ "${RUN_TESTS}" == "1" ]]; then
-  run_step "swift test" xcrun swift test -q
+  run_step "swift test" swift test -q
 fi
 
 # 5) Package.

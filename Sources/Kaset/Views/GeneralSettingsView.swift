@@ -62,10 +62,6 @@ struct GeneralSettingsView: View {
 
             Section {
                 Toggle("Share listening status on Discord", isOn: self.$settings.discordPresenceEnabled)
-
-                TextField("Discord Application ID", text: self.$settings.discordApplicationID)
-                    .textFieldStyle(.roundedBorder)
-                    .disabled(!self.settings.discordPresenceEnabled)
             } header: {
                 Text("Discord")
             }
