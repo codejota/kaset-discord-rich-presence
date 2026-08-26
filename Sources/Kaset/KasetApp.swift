@@ -312,7 +312,19 @@ struct KasetApp: App {
                     }
                     self.refreshDiscordPresence()
                 }
+                .onChange(of: self.playerService.state) { _, _ in
+                    self.refreshDiscordPresence()
+                }
                 .onChange(of: self.playerService.currentTrack) { _, _ in
+                    self.refreshDiscordPresence()
+                    self.refreshDiscordPresenceAfterTrackChange()
+                }
+                .onChange(of: self.playerService.playbackStateVideoId) { _, _ in
+                    self.refreshDiscordPresence()
+                    self.refreshDiscordPresenceAfterTrackChange()
+                }
+                .onChange(of: self.playerService.duration) { previous, current in
+                    guard abs(current - previous) >= 0.5 else { return }
                     self.refreshDiscordPresence()
                 }
                 .onChange(of: self.playerService.progress) { previous, current in
@@ -703,13 +715,29 @@ struct KasetApp: App {
     }
 
     private func refreshDiscordPresence() {
+        let track = self.playerService.currentTrack
+        let observedDuration = self.playerService.bestKnownDuration(for: track)
+        let metadataDuration = track?.duration ?? 0
+        let duration = metadataDuration.isFinite
+            && metadataDuration > 0
+            && (observedDuration <= 0 || abs(metadataDuration - observedDuration) <= 3)
+            ? metadataDuration
+            : observedDuration
+
         self.discordPresence.update(
-            song: self.playerService.currentTrack,
+            song: track,
             isPlaying: self.playerService.isPlaying,
             currentTimeMs: Int(max(0, self.playerService.progress) * 1000),
-            duration: self.playerService.bestKnownDuration(for: self.playerService.currentTrack),
+            duration: duration,
             enabled: self.settings.discordPresenceEnabled
         )
+    }
+
+    private func refreshDiscordPresenceAfterTrackChange() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(150))
+            self.refreshDiscordPresence()
+        }
     }
 
     /// Whether the currently routed player (video or music) is playing.

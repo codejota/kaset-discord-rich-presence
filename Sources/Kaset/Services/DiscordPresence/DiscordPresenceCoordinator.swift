@@ -10,15 +10,27 @@ private struct PresenceTrack: Sendable, Equatable {
     let duration: TimeInterval
     let isPlaying: Bool
     let positionMs: Int
-    let sampledAt: Int64
+    let sampledAt: TimeInterval
 }
 
 private actor LocalDiscordBridge {
     private var fileDescriptor: Int32 = -1
     private var connectedApplicationID: String?
+    private var newestRevision: UInt64 = 0
 
-    func push(_ track: PresenceTrack, applicationID: String) -> Bool {
+    func push(
+        _ track: PresenceTrack,
+        revision: UInt64,
+        resetBeforePush: Bool,
+        applicationID: String
+    ) -> Bool {
+        guard revision >= self.newestRevision else { return true }
+        self.newestRevision = revision
         guard self.ensureConnection(applicationID: applicationID) else { return false }
+        if resetBeforePush, !self.clearCurrentActivity() {
+            self.closeSocket()
+            return false
+        }
         guard let body = self.activityBody(for: track) else { return false }
         guard self.sendFrame(opcode: 1, body: body) else {
             self.closeSocket()
@@ -27,8 +39,14 @@ private actor LocalDiscordBridge {
         return self.readAcknowledgement()
     }
 
-    func clear(applicationID: String) {
+    func clear(revision: UInt64, applicationID: String) {
+        guard revision >= self.newestRevision else { return }
+        self.newestRevision = revision
         guard self.ensureConnection(applicationID: applicationID) else { return }
+        _ = self.clearCurrentActivity()
+    }
+
+    private func clearCurrentActivity() -> Bool {
         let command: [String: Any] = [
             "cmd": "SET_ACTIVITY",
             "args": [
@@ -37,9 +55,10 @@ private actor LocalDiscordBridge {
             ],
             "nonce": UUID().uuidString,
         ]
-        guard let body = try? JSONSerialization.data(withJSONObject: command) else { return }
-        _ = self.sendFrame(opcode: 1, body: body)
-        _ = self.readAcknowledgement()
+        guard let body = try? JSONSerialization.data(withJSONObject: command),
+              self.sendFrame(opcode: 1, body: body)
+        else { return false }
+        return self.readAcknowledgement()
     }
 
     func disconnect() {
@@ -79,27 +98,32 @@ private actor LocalDiscordBridge {
 
     private func activityBody(for track: PresenceTrack) -> Data? {
         var activity: [String: Any] = [
+            "type": 2,
             "details": track.title,
-            "state": "by \(track.artist)",
+            "state": track.artist,
             "buttons": [[
                 "label": "Listen on YouTube Music",
                 "url": "https://music.youtube.com/watch?v=\(track.videoID)",
             ]],
         ]
 
+        var assets: [String: Any] = [
+            "small_image": "https://music.youtube.com/img/favicon_144.png",
+            "small_text": "YouTube Music",
+        ]
         if let artworkURL = track.artworkURL {
-            activity["assets"] = [
-                "large_image": artworkURL,
-                "large_text": track.album ?? track.title,
-            ]
+            assets["large_image"] = artworkURL
+            assets["large_text"] = track.album ?? track.title
         }
+        activity["assets"] = assets
 
         if track.isPlaying {
-            let elapsed = Int64(max(0, track.positionMs) / 1000)
-            let start = track.sampledAt - elapsed
+            let positionSeconds = max(0, track.positionMs / 1000)
+            let sampledSecond = Int64(floor(track.sampledAt))
+            let start = sampledSecond - Int64(positionSeconds)
             var timestamps: [String: Int64] = ["start": start]
             if track.duration.isFinite, track.duration > 0 {
-                timestamps["end"] = start + Int64(track.duration)
+                timestamps["end"] = start + max(1, Int64(ceil(track.duration)))
             }
             activity["timestamps"] = timestamps
         }
@@ -367,6 +391,8 @@ final class DiscordPresenceCoordinator {
     private let bridge = LocalDiscordBridge()
     private var refreshTask: Task<Void, Never>?
     private var hasPublishedPresence = false
+    private var revision: UInt64 = 0
+    private var lastVideoID: String?
 
     func update(
         song: Song?,
@@ -380,6 +406,11 @@ final class DiscordPresenceCoordinator {
             return
         }
 
+        if !isPlaying {
+            self.pause(videoID: song.videoId)
+            return
+        }
+
         let artworkURL = song.thumbnailURL?.absoluteString ?? song.fallbackThumbnailURL?.absoluteString
         let track = PresenceTrack(
             title: song.title,
@@ -390,27 +421,57 @@ final class DiscordPresenceCoordinator {
             duration: duration,
             isPlaying: isPlaying,
             positionMs: max(0, currentTimeMs),
-            sampledAt: Int64(Date().timeIntervalSince1970)
+            sampledAt: Date().timeIntervalSince1970
         )
 
+        let resetBeforePush = self.lastVideoID != nil && self.lastVideoID != song.videoId
+        self.lastVideoID = song.videoId
         self.hasPublishedPresence = true
+        self.revision &+= 1
+        let revision = self.revision
         self.refreshTask?.cancel()
         self.refreshTask = Task { [bridge] in
+            var needsReset = resetBeforePush
             while !Task.isCancelled {
-                let success = await bridge.push(track, applicationID: Self.applicationID)
+                let success = await bridge.push(
+                    track,
+                    revision: revision,
+                    resetBeforePush: needsReset,
+                    applicationID: Self.applicationID
+                )
                 if Task.isCancelled { return }
+                if success {
+                    needsReset = false
+                }
                 try? await Task.sleep(for: .seconds(success ? 15 : 5))
             }
         }
     }
 
+
+    private func pause(videoID: String) {
+        self.revision &+= 1
+        let revision = self.revision
+        self.refreshTask?.cancel()
+        self.refreshTask = nil
+        self.lastVideoID = videoID
+        guard self.hasPublishedPresence else { return }
+        self.hasPublishedPresence = false
+        Task { [bridge] in
+            await bridge.clear(revision: revision, applicationID: Self.applicationID)
+        }
+    }
+
     func stop() {
+        self.revision &+= 1
+        let revision = self.revision
         self.refreshTask?.cancel()
         self.refreshTask = nil
         guard self.hasPublishedPresence else { return }
         self.hasPublishedPresence = false
+        self.lastVideoID = nil
         Task { [bridge] in
-            await bridge.clear(applicationID: Self.applicationID)
+            await bridge.clear(revision: revision, applicationID: Self.applicationID)
             await bridge.disconnect()
         }
     }
