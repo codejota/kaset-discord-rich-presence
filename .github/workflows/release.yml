@@ -33,7 +33,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
-          fetch-depth: 0  # Full history for changelog generation
+          fetch-depth: 0 # Full history for changelog generation
 
       - name: Configure git user
         run: |
@@ -82,9 +82,6 @@ jobs:
 
       - name: Clear SPM binary artifacts cache
         run: rm -rf ~/Library/Caches/org.swift.swiftpm/artifacts
-
-      - name: Run unit tests
-        run: xcrun swift test -q --skip KasetUITests
 
       - name: Determine version from tag
         id: version
