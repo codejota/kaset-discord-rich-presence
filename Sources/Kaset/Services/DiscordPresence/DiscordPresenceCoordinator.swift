@@ -448,7 +448,6 @@ final class DiscordPresenceCoordinator {
         }
     }
 
-
     private func pause(videoID: String) {
         self.revision &+= 1
         let revision = self.revision
