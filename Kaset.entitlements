@@ -15,6 +15,18 @@
 	<!-- Required for Core Audio process tap (Equalizer feature). -->
 	<key>com.apple.security.device.audio-input</key>
 	<true/>
+	<key>com.apple.security.temporary-exception.files.absolute-path.read-write</key>
+	<array>
+		<string>/private/tmp/</string>
+		<string>/tmp/</string>
+		<string>/var/folders/</string>
+		<string>/private/var/folders/</string>
+	</array>
+	<key>com.apple.security.temporary-exception.sbpl</key>
+	<array>
+		<string>(allow network-outbound (subpath "/private/var/folders"))</string>
+		<string>(allow network-outbound (subpath "/var/folders"))</string>
+	</array>
 
 	<!-- Required by Sparkle's sandboxed installer launcher/status services. -->
 	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>

@@ -6,6 +6,28 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
+resolve_xcode() {
+  local current=""
+  current=$(xcode-select -p 2>/dev/null || true)
+  if [[ "$current" == */Xcode*.app/Contents/Developer && -d "$current" ]]; then
+    export DEVELOPER_DIR="$current"
+    return 0
+  fi
+
+  local app
+  for app in /Applications/Xcode*.app "$HOME"/Applications/Xcode*.app; do
+    [[ -d "$app/Contents/Developer" ]] || continue
+    export DEVELOPER_DIR="$app/Contents/Developer"
+    return 0
+  done
+
+  echo "ERROR: Full Xcode was not found. Kaset requires Xcode because SwiftUI and FoundationModels macros are not included in Command Line Tools alone." >&2
+  echo "Install Xcode, open it once, then run this script again." >&2
+  exit 1
+}
+
+resolve_xcode
+
 # Load version info
 source "$ROOT/version.env"
 
@@ -48,7 +70,7 @@ build_product_dir() {
   # products directory (.build/out/Products/Release). Ask SwiftPM first so
   # the packaging script follows the active toolchain instead of assuming one
   # filesystem layout. Xcode 26/classic SwiftPM layouts are kept as fallbacks.
-  show_bin=$(swift build -c "$CONF" --arch "$arch" --show-bin-path 2>/dev/null || true)
+  show_bin=$(xcrun swift build -c "$CONF" --arch "$arch" --show-bin-path 2>/dev/null || true)
   if [[ -n "$show_bin" && -d "$show_bin" ]]; then
     echo "$show_bin"
     return 0
@@ -233,7 +255,7 @@ mkdir -p "$BUILD_DIR"
 # some SwiftPM layouts reuse one products directory for every --arch build.
 for ARCH in "${ARCH_LIST[@]}"; do
   echo "  → Building for $ARCH..."
-  swift build -c "$CONF" --arch "$ARCH" --product "$APP_NAME"
+  xcrun swift build -c "$CONF" --arch "$ARCH" --product "$APP_NAME"
   stage_arch_product "$APP_NAME" "$ARCH"
 done
 

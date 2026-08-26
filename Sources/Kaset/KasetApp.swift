@@ -61,6 +61,7 @@ struct KasetApp: App {
     @State private var equalizerService = EqualizerService.shared
     @State private var settings = SettingsManager.shared
     @State private var podcastsAvailabilityService = PodcastsAvailabilityService()
+    @State private var discordPresence = DiscordPresenceCoordinator()
 
     /// Triggers search field focus when set to true.
     @State private var searchFocusTrigger = false
@@ -264,6 +265,7 @@ struct KasetApp: App {
                     self.appDelegate.beginOpenURLDelivery()
                     // Reference notificationService to keep SwiftUI from deallocating it
                     _ = self.notificationService
+                    self.refreshDiscordPresence()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .kasetOpenURLs)) { notification in
                     guard let urls = notification.object as? [URL] else { return }
@@ -308,6 +310,16 @@ struct KasetApp: App {
                         // One audio source at a time: music starting pauses video.
                         self.playbackArbiter.musicDidStartPlaying()
                     }
+                    self.refreshDiscordPresence()
+                }
+                .onChange(of: self.playerService.currentTrack) { _, _ in
+                    self.refreshDiscordPresence()
+                }
+                .onChange(of: self.settings.discordPresenceEnabled) { _, _ in
+                    self.refreshDiscordPresence()
+                }
+                .onChange(of: self.settings.discordApplicationID) { _, _ in
+                    self.refreshDiscordPresence()
                 }
                 .onChange(of: self.youtubePlayerService.surfaceLocation) { _, location in
                     self.handleYouTubeSurfaceLocationChange(location)
@@ -687,6 +699,17 @@ struct KasetApp: App {
             window.orderOut(nil)
             return
         }
+    }
+
+    private func refreshDiscordPresence() {
+        self.discordPresence.update(
+            song: self.playerService.currentTrack,
+            isPlaying: self.playerService.isPlaying,
+            currentTimeMs: self.playerService.currentTimeMs,
+            duration: self.playerService.bestKnownDuration(for: self.playerService.currentTrack),
+            enabled: self.settings.discordPresenceEnabled,
+            applicationID: self.settings.discordApplicationID
+        )
     }
 
     /// Whether the currently routed player (video or music) is playing.

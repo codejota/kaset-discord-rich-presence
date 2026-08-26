@@ -13,6 +13,8 @@ final class SettingsManager {
     enum Keys {
         static let appSource = "settings.appSource"
         static let showNowPlayingNotifications = "settings.showNowPlayingNotifications"
+        static let discordPresenceEnabled = "settings.discordPresenceEnabled"
+        static let discordApplicationID = "settings.discordApplicationID"
         static let defaultLaunchPage = "settings.defaultLaunchPage"
         static let hapticFeedbackEnabled = "settings.hapticFeedbackEnabled"
         static let rememberPlaybackSettings = "settings.rememberPlaybackSettings"
@@ -252,6 +254,18 @@ final class SettingsManager {
     var showNowPlayingNotifications: Bool {
         didSet {
             UserDefaults.standard.set(self.showNowPlayingNotifications, forKey: Keys.showNowPlayingNotifications)
+        }
+    }
+
+    var discordPresenceEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(self.discordPresenceEnabled, forKey: Keys.discordPresenceEnabled)
+        }
+    }
+
+    var discordApplicationID: String {
+        didSet {
+            UserDefaults.standard.set(self.discordApplicationID, forKey: Keys.discordApplicationID)
         }
     }
 
@@ -497,6 +511,8 @@ final class SettingsManager {
     private init() {
         // Load persisted settings or use defaults
         self.showNowPlayingNotifications = UserDefaults.standard.object(forKey: Keys.showNowPlayingNotifications) as? Bool ?? true
+        self.discordPresenceEnabled = UserDefaults.standard.object(forKey: Keys.discordPresenceEnabled) as? Bool ?? false
+        self.discordApplicationID = UserDefaults.standard.string(forKey: Keys.discordApplicationID) ?? ""
         self.hapticFeedbackEnabled = UserDefaults.standard.object(forKey: Keys.hapticFeedbackEnabled) as? Bool ?? true
         self.rememberPlaybackSettings = UserDefaults.standard.object(forKey: Keys.rememberPlaybackSettings) as? Bool ?? false
 
